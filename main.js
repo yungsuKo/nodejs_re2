@@ -3,25 +3,90 @@
 
 var http = require('http');
 var fs = require('fs');
+var url = require('url')
+
 var app = http.createServer(function(request,response){
-    var url = request.url;
-    console.log(url);
-    if(url == '/'){
-      url = '/index.html';
+  var _url = request.url;
+  var queryData = url.parse(_url, true).query;
+  var pathname = url.parse(_url,true).pathname
+
+  console.log(url.parse(_url,true),pathname)
+
+  if(pathname === '/'){
+    if(queryData.id === undefined){
+      fs.readdir('./data', function(error, filelist){
+        console.log(filelist)
+        var title = 'Welcome';
+        var description = 'Hello NodeJS!'
+
+        var list = '<ul>'
+        var i = 0
+        while(i < filelist.length){
+          list = list + `<li><a href='/?id=${filelist[i]}'>${filelist[i]}</a></li>`
+          i = i + 1;
+        }
+        list = list + '</ul>'
+
+        var template =  `
+        <!doctype html>
+        <html>
+        <head>
+          <title>WEB1 - ${title}</title>
+          <meta charset="utf-8">        
+        </head>
+        <body>
+          <h1><a href="/">WEB</a></h1>
+          ${list}
+          <h2>${title}</h2>
+          <p>
+            ${description}
+          </p>
+        </body>
+        </html>    
+      `;
+      response.writeHead(200);
+      response.end(template);
+      })
+        
+    } 
+    else {
+      fs.readdir('./data', function(error, filelist){
+        fs.readFile(`data/${queryData.id}`, 'utf8', function(err, description){
+          var title = queryData.id;
+
+          var list = '<ul>'
+          var i = 0
+          while(i < filelist.length){
+            list = list + `<li><a href='/?id=${filelist[i]}'>${filelist[i]}</a></li>`
+            i = i + 1;
+          }
+          list = list + '</ul>'
+
+          var template =  `
+          <!doctype html>
+          <html>
+          <head>
+            <title>WEB1 - ${title}</title>
+            <meta charset="utf-8">
+          </head>
+          <body>
+            <h1><a href="/">WEB</a></h1>
+            ${list}
+            <h2>${title}</h2>
+            <p>
+              ${description}
+            </p>
+          </body>
+          </html>    
+        `;
+        response.writeHead(200);
+        response.end(template);
+        })
+      });
     }
-    if(url == '/favicon.ico'){
-        response.writeHead(404);
-        response.end();
-        return;
-    }
-    if(url == '/favicon.ico'){
-      response.writeHead(404);
-      response.end();
-      return;
-    }
-    response.writeHead(200);
-    console.log(__dirname + url);
-    response.end(fs.readFileSync(__dirname + url));
- 
+  }else{
+    response.writeHead(404);
+    response.end('Not found');
+  }
 });
 app.listen(3000);
