@@ -18,7 +18,6 @@ function templateHTML(title, list, body,controller){
       <h1><a href="/">WEB</a></h1>
       ${list}
       ${controller}
-      
       ${body}
     </body>
     </html>    
@@ -80,8 +79,15 @@ var app = http.createServer(function(request,response){
             </p>
             `,
             `
-            <p><a href="/create"> create </a></p>
-            <p><a href="/update?id=${title}"> update </a></p>
+            <p>
+              <a href="/create"> create</a>
+              <a href="/update?id=${title}"> update </a>
+            </p>
+            <form action="/delete_process" method = "post">
+              <input type="hidden" name = "id" value = "${title}">
+              <input type="submit" value = "delete">
+            </form>
+            
             `
           );
         response.writeHead(200);
@@ -144,14 +150,14 @@ var app = http.createServer(function(request,response){
         var template = templateHTML(title, list, 
         `
           <form action="http://localhost:3000/update_process" method="post" >
-          <input type="hidden" name="id" value="${id}">
-          <p><input type="text" name="title" placeholder = "title" value="${title}"></p>
-          <p>
-          <textarea name = "description" placeholder = "description">${description}</textarea>
-          </p>
-          <p>
-          <input type = "submit">
-          </p>
+            <input type="hidden" name="id" value="${id}">
+            <p><input type="text" name="title" placeholder = "title" value="${title}"></p>
+            <p>
+              <textarea name = "description" placeholder = "description">${description}</textarea>
+            </p>
+            <p>
+              <input type = "submit">
+            </p>
           </form>
         `,
         ``
@@ -182,6 +188,26 @@ var app = http.createServer(function(request,response){
           response.end();
           // file written successfully
         });
+      });
+    });
+  }
+  else if(pathname === "/delete_process"){
+    var body = '';
+    request.on('data', function(data){
+      body = body + data;
+      console.log("body = ",body);
+    });
+    request.on('end', function(){
+      var post = qs.parse(body);
+      console.log(post);
+      var title = post.id;
+
+      fs.unlink(`data/${title}`,function(err){
+        response.writeHead(302, {
+          'Location' : `/`
+        });
+        response.end();
+        // file deleted successfully
       });
     });
   }
